@@ -1,55 +1,105 @@
-// SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0 <0.9.0;
 
-/* is ERC165 */
-interface ERC721 {
-    event Transfer(
-        address indexed _from,
-        address indexed _to,
-        uint256 indexed _tokenId
-    );
-    event Approval(
-        address indexed _owner,
-        address indexed _approved,
-        uint256 indexed _tokenId
-    );
-    event ApprovalForAll(
-        address indexed _owner,
-        address indexed _operator,
-        bool _approved
-    );
+contract EventModuleCore {
 
-    function balanceOf(address _owner) external view returns (uint256);
+    struct Channel {
+        address owner;
+        string protocol;
+        address protocolContractAddress;
+        string _hash;
+        User[] subscriber;
+        bool exists;
+    }
 
-    function ownerOf(uint256 _tokenId) external view returns (address);
+    struct User {
+        address userAddress;
+        string _hash;
+        bool isSubsribed;
+    }
 
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId,
-        bytes memory data
-    ) external payable;
+    mapping(address => User) private users;
+    mapping(uint256 => Channel) private channels;
 
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external payable;
+    // Modifiers to be added with User Role/Permissions
 
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external payable;
+// Events
+    event ChannelCreated(address owner, uint256 uuid, uint256 timestamp, string filehash);
+    event ChannelUpdated(address owner, uint256 timestamp, string filehash);
+    event ChannelDisabled(address owner, uint256 timestamp, string filehash);
 
-    function approve(address _approved, uint256 _tokenId) external payable;
+    event SubscribedToChannel(address owner, uint256 channelUUID, uint256 timestamp);
+    event UnubscribedChannel(address owner, uint256 channelUUID, uint256 timestamp);
 
-    function setApprovalForAll(address _operator, bool _approved) external;
+    event UserInfoUpdated(address owner, string hash, uint256 timestamp);
 
-    function getApproved(uint256 _tokenId) external view returns (address);
+    function createChannel(uint256 uuid, string memory protocol, address protocolContractAddress, string memory _newHash) public {
+       // can be developed further with modifiers (duplicate check) (// modifier access copntrat)
+        if (channels[uuid].owner == msg.sender) {
+            revert("channel exists");
+        }
+        channels[uuid].owner = msg.sender;
+        channels[uuid].protocol = protocol;
+        channels[uuid].protocolContractAddress = protocolContractAddress;
+        channels[uuid]._hash = _newHash;
+        channels[uuid].exists = true;
+        emit ChannelCreated(msg.sender, uuid, block.timestamp, _newHash);
+    }
 
-    function isApprovedForAll(address _owner, address _operator)
-        external
-        view
-        returns (bool);
+    function getChannel(uint256 uuid) public view returns (string memory protocol, address protocolContractAddress, string memory _newHash) {
+        require(channels[uuid].exists, "Channel does not exist.");
+         if (channels[uuid].owner != msg.sender) {
+            revert("Not a owner of the channel");
+        }
+        return (channels[uuid].protocol, channels[uuid].protocolContractAddress, channels[uuid]._hash);
+    }
+
+    function subscribedToChannel(uint256 uuid, string memory _newHash) public{
+        require(channels[uuid].exists, "Channel does not exist.");
+       User memory user = User(msg.sender, _newHash, true);
+       channels[uuid].subscriber.push(user);
+       emit SubscribedToChannel(msg.sender, uuid, block.timestamp);
+    }
+
+     function getUserInfo(address userAddress) public view returns (string memory) {
+         return users[userAddress]._hash;
+     }
+
+     function upDateUserInfo(string memory hash) public {
+        if (users[msg.sender].userAddress == msg.sender) {
+            revert("invalid account");
+        }
+         users[msg.sender]._hash = hash;
+        emit UserInfoUpdated(msg.sender, hash, block.timestamp);
+
+     }
+
+     function unSubscribeChannel(uint256 uuid) public{
+           require(channels[uuid].exists, "Channel does not exist.");
+          for (uint256 i = 0; i < channels[uuid].subscriber.length; i++) {
+             if(channels[uuid].subscriber[i].userAddress == msg.sender) {
+                 channels[uuid].subscriber[i].isSubsribed = false;
+             }
+        }
+         // to be done
+         emit UnubscribedChannel(msg.sender, uuid, block.timestamp);
+    }
+
+    function getListOfSubscriber(uint256 uuid) public view returns (address[] memory, string[] memory, bool[] memory) {
+        if (channels[uuid].owner != msg.sender) {
+            revert("Not a owner of the channel");
+        }
+
+         uint length = channels[uuid].subscriber.length;
+          address[] memory addrs = new address[](length);
+          string[] memory hash = new string[](length);
+          bool[] memory isSubsribed = new bool[](length);
+
+        for (uint i = 0; i < length; i++) {
+            addrs[i] = channels[uuid].subscriber[i].userAddress;
+            hash[i] = channels[uuid].subscriber[i]._hash;
+            isSubsribed[i] = channels[uuid].subscriber[i].isSubsribed;
+        }
+        return (addrs, hash, isSubsribed);
+    }
+
 }
