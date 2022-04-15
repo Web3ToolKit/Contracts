@@ -18,12 +18,12 @@
  *
  */
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
 // const infuraKey = "fj4jll3k.....";
 //
-// const fs = require('fs');
-// const mnemonic = fs.readFileSync(".secret").toString().trim();
-const PrivateKeyProvider = require("truffle-privatekey-provider");
+const fs = require('fs');
+const mnemonic = fs.readFileSync(".secret").toString().trim();
+
 
 module.exports = {
   /**
@@ -44,16 +44,17 @@ module.exports = {
     // options below to some value.
     //
     development: {
-     host:  '127.0.0.1',     // Localhost (default: none)
-     port:  8545,            // Standard Ethereum port (default: none)
-     network_id:  "*",       // Any network (default: none)
+        host:  '127.0.0.1',     // Localhost (default: none)
+        port:  8545,            // Standard Ethereum port (default: none)
+        network_id:  "*",       // Any network (default: none)
     },
 
-    besu: {
-      gasPrice: 0,
-      gas: 4500000,
-      network_id: "*",
-      provider: () => new PrivateKeyProvider(process.env.PRIVATE_KEY, process.env.RPC_ENDPOINT),
+    matic: {
+        confirmations: 2,
+        timeoutBlocks: 200,
+        skipDryRun: true,
+        network_id: 80001,
+        provider: () =>new HDWalletProvider(mnemonic, "https://rpc-mumbai.matic.today"),
     },
 
     // Another network with more advanced options...

@@ -1,7 +1,20 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.6.0 <0.9.0;
 
-contract EventModuleCore {
+contract NotificationModuleCore {
+    address owner;
+
+    constructor() {
+      owner = msg.sender;
+    }
+
+    function destroy(address payable _to) public {
+         require(
+            msg.sender == owner,
+            "Only owner can call this function."
+        );
+        selfdestruct(_to);
+    }
 
     struct Channel {
         address owner;

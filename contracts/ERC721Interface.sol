@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.6.0 <0.9.0;
 
 contract EventModuleCore {
@@ -88,7 +89,6 @@ contract EventModuleCore {
         if (channels[uuid].owner != msg.sender) {
             revert("Not a owner of the channel");
         }
-
          uint length = channels[uuid].subscriber.length;
           address[] memory addrs = new address[](length);
           string[] memory hash = new string[](length);
